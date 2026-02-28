@@ -1,0 +1,5 @@
+file(GLOB SOURCES "src/*.cpp")
+add_library(MediaFramework SHARED ${SOURCES})
+target_include_directories(MediaFramework PRIVATE include)
+target_link_libraries(MediaFramework PRIVATE CommonLibF4 directxtex::directxtex minhook::minhook)
+target_precompile_headers(MediaFramework PRIVATE src/PCH.h)
