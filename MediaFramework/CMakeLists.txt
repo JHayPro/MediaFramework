@@ -4,8 +4,8 @@ project(
     LANGUAGES CXX
 )
 
-find_package(directxtex CONFIG REQUIRED)
-find_package(minhook CONFIG REQUIRED)
+find_package(directxtex CONFIG REQUIRED HINTS "${VCPKG_ROOT}/installed/x64-windows-static-md")
+find_package(minhook CONFIG REQUIRED HINTS "${VCPKG_ROOT}/installed/x64-windows-static-md")
 
 # Generate Version.h from template
 configure_file(

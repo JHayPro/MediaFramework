@@ -28,6 +28,9 @@ add_subdirectory(external/CommonLibF4)
 
 # # Core framework
 add_subdirectory(MediaFramework)
+if (MSVC)
+    target_compile_options(MediaFramework PRIVATE "$<$<CONFIG:Release>:/MD>")
+endif()
 
 # # Decoders
 # add_subdirectory(audioDecoder)
