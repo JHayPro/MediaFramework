@@ -7,10 +7,10 @@
 #include "RE/Fallout.h"
 
 #include <fstream>
-#include <minhook/MinHook.h>
+#include <MinHook.h>
 #include <d3d11.h>
 #include <d3dcompiler.h>
-#include <DirectXTex/DirectXTex.h>
+#include <DirectXTex.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/msvc_sink.h>
 #include <wrl.h>

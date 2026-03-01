@@ -275,7 +275,8 @@ bool StopDecoderPlayback(Decoder& decoder)
 		MediaInstance& instance = instIt->second;
 
         ComPtr<ID3D11DeviceContext> ctx;
-        renderer->device->GetImmediateContext(ctx.GetAddressOf());
+        ID3D11Device* device = reinterpret_cast<ID3D11Device*>(renderer->device);
+        device->GetImmediateContext(ctx.GetAddressOf());
         if (ctx) {
 			ClearTextureToBlack(ctx.Get(), instance);
         }

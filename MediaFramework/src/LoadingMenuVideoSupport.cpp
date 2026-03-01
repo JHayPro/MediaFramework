@@ -190,7 +190,7 @@ namespace LoadingMenuVideo
 						OriginalAdvanceMovie(menu, a_deltaTime, a_currentTime);
 						return;
 					}
-					ID3D11Device* device = renderer->device;
+                    ID3D11Device* device = reinterpret_cast<ID3D11Device*>(renderer->device);
 					ComPtr<ID3D11DeviceContext> ctx;
 					device->GetImmediateContext(ctx.GetAddressOf());
 
