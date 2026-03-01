@@ -121,7 +121,8 @@ extern "C" DLLEXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* con
 
     auto renderer = RE::BSGraphics::RendererData::GetSingleton();
     if (renderer && renderer->device) {
-        if (!CompileShadersAndInputLayout(renderer->device) || !CreateRenderStates(renderer->device)) {
+		ID3D11Device* device = reinterpret_cast<ID3D11Device*>(renderer->device);
+        if (!CompileShadersAndInputLayout(device) || !CreateRenderStates(device)) {
             logger::error("Failed to initialize shaders or render states");
             return false;
         }

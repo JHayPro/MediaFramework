@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.26)
 
-project(Fallout4MediaFramework
+project(MediaFramework
     VERSION 0.1.0
     LANGUAGES CXX
 )
@@ -27,7 +27,7 @@ endif()
 add_subdirectory(external/CommonLibF4)
 
 # # Core framework
-# add_subdirectory(MediaFramework)
+add_subdirectory(MediaFramework)
 
 # # Decoders
 # add_subdirectory(audioDecoder)
