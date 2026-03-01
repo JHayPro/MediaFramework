@@ -1,8 +1,19 @@
 {
-  "name": "MediaFramework",
+  "name": "mediaframework",
   "version-string": "0.1.0",
   "dependencies": [
     "directxtex",
-    "minhook"
+    "minhook",
+    "args",
+    "boost-stl-interfaces",
+    "fmt",
+    "frozen",
+    "nowide",
+    "robin-hood-hashing",
+    "rsm-mmio",
+    "spdlog",
+    "srell",
+    "xbyak",
+    "rapidcsv"
   ]
 }
