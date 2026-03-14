@@ -4,7 +4,7 @@ cmake_policy(SET CMP0144 NEW)
 
 find_package(FFMPEG REQUIRED)
 
-add_library(AudioDecoder SHARED)
+add_executable(AudioDecoder)
 
 file(GLOB SOURCES "src/*.cpp")
 file(GLOB HEADERS "header/*.h" "include/*.h")
