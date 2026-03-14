@@ -38,5 +38,5 @@ add_subdirectory(VideoDecoder)
 
 # # Plugins
 # add_subdirectory(Plugins/DynamicTexture)
-# add_subdirectory(Plugins/MediaLoadScreen)
+add_subdirectory(Plugins/MediaLoadScreens)
 # add_subdirectory(Plugins/VideoOverlay)
