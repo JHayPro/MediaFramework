@@ -47,3 +47,15 @@ target_precompile_headers(DynamicTextures PRIVATE header/PCH.h)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
 source_group("header" FILES ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h)
+
+set_from_environment(Fallout4Path)
+if (DEFINED Fallout4Path)
+    set(F4SE_PLUGINS_PATH $ENV{Fallout4Path}/Data/F4SE/Plugins)
+
+    add_custom_command(
+        TARGET DynamicTextures 
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:DynamicTextures> ${F4SE_PLUGINS_PATH}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_PDB_FILE:DynamicTextures> ${F4SE_PLUGINS_PATH}
+    )
+endif()
