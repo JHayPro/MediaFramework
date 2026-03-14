@@ -61,14 +61,20 @@ set_target_properties(AudioDecoder PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<LOWER_CASE:$<CONFIG>>/MediaFramework_Decoders"
 )
 
+set_from_environment(Fallout4Path)
 if (DEFINED Fallout4Path)
     set(DECODER_PATH $ENV{Fallout4Path}/Data/F4SE/Plugins/MediaFramework_Decoders)
 
     add_custom_command(
-        TARGET VideoDecoder 
+        TARGET AudioDecoder 
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-            $<TARGET_FILE_DIR:VideoDecoder>
+            $<TARGET_FILE_DIR:AudioDecoder>
             ${DECODER_PATH}
     )
+else ()
+	message(
+		WARNING
+		"Variable Fallout4Path is not defined. Skipping post-build copy command."
+	)
 endif()

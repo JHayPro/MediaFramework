@@ -50,7 +50,7 @@ source_group("header" FILES ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h)
 
 set_from_environment(Fallout4Path)
 if (DEFINED Fallout4Path)
-    set(F4SE_PLUGINS_PATH $ENV{Fallout4Path}/Data/F4SE/Plugins)
+    set(F4SE_PLUGINS_PATH $ENV{Fallout4Path}/Data/F4SE/Plugins/)
 
     add_custom_command(
         TARGET DynamicTextures 
@@ -58,4 +58,9 @@ if (DEFINED Fallout4Path)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:DynamicTextures> ${F4SE_PLUGINS_PATH}
         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_PDB_FILE:DynamicTextures> ${F4SE_PLUGINS_PATH}
     )
+else ()
+	message(
+		WARNING
+		"Variable Fallout4Path is not defined. Skipping post-build copy command."
+	)
 endif()
