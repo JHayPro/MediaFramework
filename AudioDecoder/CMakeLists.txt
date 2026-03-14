@@ -56,3 +56,7 @@ target_precompile_headers(AudioDecoder PRIVATE header/PCH.h)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
 source_group("header" FILES ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h)
+
+set_target_properties(AudioDecoder PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<LOWER_CASE:$<CONFIG>>/MediaFramework_Decoders"
+)
