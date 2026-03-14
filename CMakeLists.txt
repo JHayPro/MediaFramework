@@ -33,8 +33,8 @@ if (MSVC)
 endif()
 
 # # Decoders
-add_subdirectory(audioDecoder)
-# add_subdirectory(videoDecoder)
+add_subdirectory(AudioDecoder)
+add_subdirectory(VideoDecoder)
 
 # # Plugins
 # add_subdirectory(Plugins/DynamicTexture)
