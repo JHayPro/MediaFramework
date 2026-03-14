@@ -36,3 +36,7 @@ extern "C" {
 #include <libswresample/swresample.h>
 #include <libavutil\opt.h>
 }
+
+using namespace std::literals;
+
+#include "Version.h"

@@ -21,3 +21,7 @@ extern "C" {
 #include <libswscale/swscale.h>
 #include <libavutil/error.h> // For av_strerror
 }
+
+using namespace std::literals;
+
+#include "Version.h"
