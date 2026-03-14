@@ -33,7 +33,7 @@ if (MSVC)
 endif()
 
 # # Decoders
-# add_subdirectory(audioDecoder)
+add_subdirectory(audioDecoder)
 # add_subdirectory(videoDecoder)
 
 # # Plugins

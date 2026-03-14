@@ -14,6 +14,7 @@
     "spdlog",
     "srell",
     "xbyak",
-    "rapidcsv"
+    "rapidcsv",
+    "ffmpeg"
   ]
 }

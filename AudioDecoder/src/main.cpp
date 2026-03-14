@@ -1,11 +1,11 @@
-#include "PCH.h"
+#include "PCH.h" 
 #include <format>
 #include <libavutil/error.h>
 
 // ============================================================================
 // CONSTANTS & CONFIGURATION
 // ============================================================================
-constexpr uint32_t AUDIO_BUFFER_COUNT = 6;
+constexpr uint32_t AUDIO_BUFFER_COUNT = 6; 
 constexpr uint32_t AUDIO_BUFFER_SIZE_MS = 300;
 constexpr uint32_t HEARTBEAT_INTERVAL_MS = 100;
 constexpr uint32_t STATE_INITIALIZING = 0;
@@ -17,7 +17,7 @@ constexpr float MAX_AUDIO_DISTANCE = 30.0f;
 constexpr float MIN_AUDIO_DISTANCE = 1.0f;
 
 // Command types (matching VideoDecoder)
-constexpr uint32_t CMD_NONE = 0;
+constexpr uint32_t CMD_NONE = 0; 
 constexpr uint32_t CMD_PLAY = 1;
 constexpr uint32_t CMD_PAUSE = 2;
 constexpr uint32_t CMD_STOP = 3;
@@ -463,7 +463,7 @@ public:
                 header->currentAudioPTS = lastPTS;
             }
 
-            av_frame_unref(frame.get());
+            av_frame_unref(frame.get()); 
             return DecodeResult::Success;
         }
         else if (ret == AVERROR(EAGAIN)) {
