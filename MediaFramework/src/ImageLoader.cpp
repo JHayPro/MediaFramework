@@ -1,10 +1,5 @@
 // ImageLoader.cpp (MediaFramework)
 #include "ImageLoader.h"
-#include <filesystem>
-#include <codecvt>
-#include <locale>
-#include <algorithm>   // added for std::transform
-#include <cctype>      // added for std::tolower
 
 bool LoadDDSImage(ID3D11Device* device, const std::string& ddsPath, MediaInstance& instance)
 {

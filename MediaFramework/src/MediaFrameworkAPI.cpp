@@ -425,7 +425,7 @@ extern "C" MF_Result MF_QueryFramework(
 
     switch (query) {
         case FrameworkQueryType::Framework_Version: {
-            outResult->stringValue = Version::NAME.data();
+            outResult->floatValue = Version::VERSION.pack();
             break;
         }
         default:
