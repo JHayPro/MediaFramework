@@ -20,13 +20,13 @@ configure_file(
 
 find_package(FFMPEG REQUIRED)
 
-add_executable(VideoDecoder)
+add_executable(${PROJECT_NAME})
 
-file(GLOB SOURCES "src/*.cpp")
-file(GLOB HEADERS "header/*.h")
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/*.cpp")
+file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS "header/*.h")
 
 target_sources(
-    VideoDecoder
+    ${PROJECT_NAME}
     PRIVATE
         ${SOURCES}
         ${HEADERS}
@@ -34,30 +34,26 @@ target_sources(
         ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h
 )
 
-target_sources(VideoDecoder PRIVATE ${SOURCES} ${HEADERS})
+target_sources(${PROJECT_NAME} PRIVATE ${SOURCES} ${HEADERS})
 
-target_include_directories(VideoDecoder PRIVATE
+target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/header
     ${FFMPEG_INCLUDE_DIRS}
 )
 
-target_link_libraries(VideoDecoder PRIVATE
+target_link_libraries(${PROJECT_NAME} PRIVATE
     ${FFMPEG_LIBRARIES}
 )
 
-if(MSVC)
-    target_compile_options(VideoDecoder PRIVATE "$<$<CONFIG:Release>:/MD>")
-endif()
-
-target_precompile_headers(VideoDecoder PRIVATE header/PCH.h)
+target_precompile_headers(${PROJECT_NAME} PRIVATE header/PCH.h)
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
 source_group("header" FILES ${CMAKE_CURRENT_BINARY_DIR}/include/Version.h)
 
-set_target_properties(VideoDecoder PROPERTIES
+set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<LOWER_CASE:$<CONFIG>>/MediaFramework_Decoders"
 )
 
@@ -66,15 +62,16 @@ if (DEFINED Fallout4Path)
     set(DECODER_PATH $ENV{Fallout4Path}/Data/F4SE/Plugins/MediaFramework_Decoders)
 
     add_custom_command(
-        TARGET VideoDecoder 
+        TARGET ${PROJECT_NAME} 
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-            $<TARGET_FILE_DIR:VideoDecoder>
+            $<TARGET_FILE_DIR:${PROJECT_NAME}>
             ${DECODER_PATH}
+        COMMENT "Copying ${PROJECT_NAME}.exe + .pdb to MediaFramework_Decoders folder"
     )
 else ()
 	message(
 		WARNING
-		"Variable Fallout4Path is not defined. Skipping post-build copy command."
+		"Fallout4Path environment variable not set — skipping post-build copy to game directory."
 	)
 endif()

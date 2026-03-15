@@ -25,9 +25,6 @@ set_target_properties(AddressLibGen PROPERTIES FOLDER "CommonLibF4")
 set_target_properties(RTTIDump PROPERTIES FOLDER "CommonLibF4")
 
 add_subdirectory(MediaFramework)
-if (MSVC)
-    target_compile_options(MediaFramework PRIVATE "$<$<CONFIG:Release>:/MD>")
-endif()
 
 add_subdirectory(AudioDecoder)
 add_subdirectory(VideoDecoder)

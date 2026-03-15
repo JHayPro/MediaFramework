@@ -2,23 +2,36 @@
   "version": 6,
   "configurePresets": [
     {
-      "name": "windows-x64",
+      "name": "windows-x64-release",
       "displayName": "Windows x64 (Release)",
       "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md-ffmpeg-dynamic",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static-ffmpeg-dynamic",
         "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/triplets"
+      }
+    },
+    {
+      "name": "windows-x64-debug",
+      "displayName": "Windows x64 (Debug)",
+      "inherits": "windows-x64-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     }
   ],
   "buildPresets": [
     {
       "name": "build-release",
-      "configurePreset": "windows-x64",
+      "configurePreset": "windows-x64-release",
       "configuration": "Release"
+    },
+    {
+      "name": "build-debug",
+      "configurePreset": "windows-x64-debug",
+      "configuration": "Debug"
     }
   ]
 }

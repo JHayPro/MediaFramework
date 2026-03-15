@@ -16,13 +16,14 @@ configure_file(
     @ONLY
 )
 
-file(GLOB SOURCES "src/*.cpp")
-file(GLOB HEADERS "header/*.h" "include/*.h")
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/*.cpp")
+file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS "header/*.h" "include/*.h")
 
-add_library(DynamicTextures SHARED)
+
+add_library(${PROJECT_NAME} SHARED)
 
 target_sources(
-    DynamicTextures
+    ${PROJECT_NAME}
     PRIVATE
         ${SOURCES}
         ${HEADERS}
@@ -31,7 +32,7 @@ target_sources(
 )
 
 target_include_directories(
-    DynamicTextures
+    ${PROJECT_NAME}
     PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -40,9 +41,9 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/../../MediaFramework/include
 )
 
-target_link_libraries(DynamicTextures PRIVATE MediaFramework CommonLibF4)
+target_link_libraries(${PROJECT_NAME} PRIVATE MediaFramework CommonLibF4)
 
-target_precompile_headers(DynamicTextures PRIVATE header/PCH.h)
+target_precompile_headers(${PROJECT_NAME} PRIVATE header/PCH.h)
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
@@ -53,14 +54,15 @@ if (DEFINED Fallout4Path)
     set(F4SE_PLUGINS_PATH $ENV{Fallout4Path}/Data/F4SE/Plugins/)
 
     add_custom_command(
-        TARGET DynamicTextures 
+        TARGET ${PROJECT_NAME} 
         POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:DynamicTextures> ${F4SE_PLUGINS_PATH}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_PDB_FILE:DynamicTextures> ${F4SE_PLUGINS_PATH}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${PROJECT_NAME}> ${F4SE_PLUGINS_PATH}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_PDB_FILE:${PROJECT_NAME}> ${F4SE_PLUGINS_PATH}
+        COMMENT "Copying ${PROJECT_NAME}.dll + .pdb to F4SE Plugins folder"
     )
 else ()
 	message(
 		WARNING
-		"Variable Fallout4Path is not defined. Skipping post-build copy command."
+		"Fallout4Path environment variable not set — skipping post-build copy to game directory."
 	)
 endif()
