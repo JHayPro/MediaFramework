@@ -57,7 +57,11 @@ if (DEFINED Fallout4Path)
         TARGET ${PROJECT_NAME} 
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${PROJECT_NAME}> ${F4SE_PLUGINS_PATH}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_PDB_FILE:${PROJECT_NAME}> ${F4SE_PLUGINS_PATH}
+        COMMAND $<$<CONFIG:Debug>:${CMAKE_COMMAND}>
+            $<$<CONFIG:Debug>:-E>
+            $<$<CONFIG:Debug>:copy_if_different>
+            $<$<CONFIG:Debug>:$<TARGET_PDB_FILE:${PROJECT_NAME}>>
+            $<$<CONFIG:Debug>:${F4SE_PLUGINS_PATH}>
         COMMENT "Copying ${PROJECT_NAME}.dll + .pdb to F4SE Plugins folder"
     )
 else ()
