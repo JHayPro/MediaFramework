@@ -1,21 +1,8 @@
 # Build artifacts
 build/
-vcpkg_installed/
-*.pdb
-*.obj
-*.exe
-*.dll
-
-# External binaries (FFmpeg downloads)
-external/FFmpeg/*
-*.zip
-
-# IDE/Editor temp files
 .vscode/
 .idea/
 *.swp
 *.tmp
-
-# Other common ignores
 .DS_Store
 Thumbs.db
