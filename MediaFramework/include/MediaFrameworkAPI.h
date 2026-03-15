@@ -1,4 +1,4 @@
-// MediaFrameworkAPI.h (MediaFramework) - Updated with INI support
+// MediaFrameworkAPI.h (MediaFramework)
 #pragma once
 #include "PCH.h"
 

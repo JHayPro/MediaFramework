@@ -21,8 +21,6 @@
 
 #pragma warning(pop)
 
-#define DLLEXPORT __declspec(dllexport)
-
 namespace logger = F4SE::log;
 
 using namespace std::literals;

@@ -126,6 +126,13 @@ F4SE_EXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* const a_f4se
 		logger::error("Failed to create job object");
 	}
 
+	F4SE::Init(a_f4se, true);
+	const auto messaging = F4SE::GetMessagingInterface();
+	if (!messaging || !messaging->RegisterListener(MessageHandler)) {
+		logger::critical("Failed to register message listener");
+		return false;
+	}
+
     logger::info("MediaFramework loaded - installing hooks");
     if (!InstallD3DHook()) {
         return false;
@@ -144,13 +151,6 @@ F4SE_EXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* const a_f4se
             return false;
         }
     }
-
-	F4SE::Init(a_f4se, true);
-	const auto messaging = F4SE::GetMessagingInterface();
-	if (!messaging || !messaging->RegisterListener(MessageHandler)) {
-		logger::critical("Failed to register message listener");
-		return false;
-	}
 
     std::atexit(UnloadResources);
 

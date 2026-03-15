@@ -5,11 +5,13 @@
 #include "F4SE/F4SE.h"
 #include "RE/Fallout.h"
 
-#include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/sinks/msvc_sink.h>
+#ifdef NDEBUG
+#	include <spdlog/sinks/basic_file_sink.h>
+#else
+#	include <spdlog/sinks/msvc_sink.h>
+#endif
 #pragma warning(pop)
 
-#include <fstream>
 #include <wrl.h>
 #include "MediaFrameworkAPI.h"
 
