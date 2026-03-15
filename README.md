@@ -18,3 +18,5 @@ cd MediaFramework
 cmake --preset windows-x64-debug
 cmake --build --preset build-debug
 ```
+
+License: Source-available. Redistribution of the mod or modified versions is not permitted without permission.
