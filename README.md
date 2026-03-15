@@ -3,6 +3,7 @@ API for flexible multimedia functionality. Primary usage is performing engine le
 
 ## Build
 
+Release:
 ```bash
 git clone --recurse-submodules https://github.com/JHayPro/MediaFramework
 cd MediaFramework
@@ -10,7 +11,7 @@ cmake --preset windows-x64-release
 cmake --build --preset build-release
 ```
 
-Debug Build:
+Debug:
 ```bash
 git clone --recurse-submodules https://github.com/JHayPro/MediaFramework
 cd MediaFramework
