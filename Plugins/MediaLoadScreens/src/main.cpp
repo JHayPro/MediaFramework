@@ -1,6 +1,20 @@
 // main.cpp (MediaLoadscreen)
-#include "Version.h"
+#include "MediaLoadScreensAPI.h"
 #include "Events.h"
+
+bool F4SEAPI Register(RE::BSScript::IVirtualMachine* a_vm)
+{
+	if (!a_vm) {
+		return false;
+	}
+
+	const auto obj = "MediaLoadscreen"sv;
+	a_vm->BindNativeMethod(obj, "QueueMediaFile"sv, MediaLoadscreenPapyrus::QueueMediaFile, std::nullopt, false);
+	a_vm->BindNativeMethod(obj, "QueueMediaFolder"sv, MediaLoadscreenPapyrus::QueueMediaFolder, std::nullopt, false);
+
+	logger::info("All MyPapyrus functions registered!");
+	return true;
+}
 
 /** @brief F4SE plugin query entry point. */
 F4SE_EXPORT bool F4SEAPI F4SEPlugin_Query(const F4SE::QueryInterface* a_f4se, F4SE::PluginInfo* a_info)
@@ -63,7 +77,22 @@ F4SE_EXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* const a_f4se
 		return false;
 	}
 
+	const auto papyrus = F4SE::GetPapyrusInterface();
+	if (!papyrus) {
+		logger::critical("Failed to get F4SE papyrus interface");
+		return false;
+	}
+	papyrus->Register(Register);
+
 	messaging->RegisterListener(MessageHandler);
+
+	auto fullPath = std::filesystem::path(REL::Module::get().filePath());
+	if (!std::filesystem::exists(fullPath)) {
+		logger::critical("Failed to get plugin path");
+		return false;
+	}
+	dllParentPath = fullPath.parent_path();
+	parentIniPath = dllParentPath.string() + "\\" + Version::PROJECT.data() + ".ini";
 
 	logger::info("Plugin loaded successfully");
 
@@ -85,4 +114,4 @@ F4SE_EXPORT constinit auto F4SEPlugin_Version = []() noexcept {
 	data.CompatibleVersions({ F4SE::RUNTIME_1_10_163 });
 
 	return data;
-	}();
+}();

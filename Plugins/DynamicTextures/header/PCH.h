@@ -22,3 +22,5 @@ namespace logger = F4SE::log;
 using namespace std::literals;
 
 using Microsoft::WRL::ComPtr;
+
+#include "Version.h"

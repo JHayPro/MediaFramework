@@ -1,32 +1,8 @@
 // Events.cpp (MediaLoadscreen)
 #include "Events.h"
 #include <chrono>
-#include <filesystem>
 #include <random>
 #include <thread>
-
-namespace fs = std::filesystem;
-
-static std::string GetMediaFolderPath()
-{
-    char dllPath[MAX_PATH]{};
-    HMODULE hModule = nullptr;
-    if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-                           GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                           reinterpret_cast<LPCSTR>(GetMediaFolderPath),
-                           &hModule))
-    {
-        GetModuleFileNameA(hModule, dllPath, MAX_PATH);
-    }
-    else
-    {
-        logger::error("MediaLoadscreen: Failed to get DLL module handle");
-        return "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Fallout 4\\Data\\F4SE\\Plugins\\ALR-V_Videos";
-    }
-
-    fs::path dllFile(dllPath);
-    return (dllFile.parent_path() / "ALR-V_Videos").string();
-}
 
 /** @brief Event sink for loading menu open/close. */
 class LoadingMenuSink : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
@@ -40,7 +16,7 @@ public:
 			if (ev.opening) {
 				DecoderCreateParams decParams = { sizeof(DecoderCreateParams), DecoderComposition{ DecoderVisualType::Video, AudioType::Enabled } };
 				if (MF_CreateDecoder(&decParams, &g_decoderHandle) != MF_Result::Ok) {
-					logger::error("MediaLoadscreen: Failed to create decoder");
+					logger::error("Failed to create decoder");
 					return RE::BSEventNotifyControl::kContinue;
 				}
 
@@ -49,12 +25,12 @@ public:
 					g_checkThread.join();
 				}
 				g_checkThread = std::thread([]() {
-					const std::string folder = GetMediaFolderPath();
+					const std::string folder = dllParentPath.string() + std::string("ALR-V_Videos");
 					MediaDescriptor descs[256]{};
 					uint32_t count = 0;
 
 					if (MF_DiscoverMedia(folder.c_str(), descs, 256, &count) != MF_Result::Ok || count == 0) {
-						logger::warn("MediaLoadscreen: No media found via discovery in {}", folder);
+						logger::warn("No media found via discovery in {}", folder);
 					}
 					// Random selection
 					std::random_device rd;
@@ -68,7 +44,7 @@ public:
 					uint32_t commandCount = 0;
 
 					MF_Result result = MF_ParseMediaINI(
-						"C:\\Program Files (x86)\\Steam\\steamapps\\common\\Fallout 4\\Data\\F4SE\\Plugins\\MediaLoadscreen.ini",  // Child defaults (can be NULL)
+						parentIniPath.string().c_str(),
 						selectedMediaDescriptor.iniPath,                                                                           // File-specific INI
 						commands,
 						16, 
@@ -82,12 +58,12 @@ public:
 						if (MF_QueryVideo(g_instanceHandle, VideoQueryType::InstanceValid, &videoQueryResult) == MF_Result::Ok && !videoQueryResult.boolValue) {
 
 							if (MF_CreateMediaInstance(g_decoderHandle, &createParams, commands, commandCount, &g_instanceHandle) != MF_Result::Ok) {
-								logger::error("MediaLoadscreen: Failed to recreate video instance");
+								logger::error("Failed to recreate video instance");
 								return;
 							}
 
 						} else if (MF_QueryVideo(g_instanceHandle, VideoQueryType::IsPlaying, &videoQueryResult) == MF_Result::Ok && !videoQueryResult.boolValue) {
-							logger::info("MediaLoadscreen: Video instance {} ended during loading, restarting", g_instanceHandle);
+							logger::info("Video instance {} ended during loading, restarting", g_instanceHandle);
 							MF_DestroyMediaInstance(g_instanceHandle);
 							// Play from -1
 							//PlayParams playParams{ -1, repeatSetting::None, 1.0f };
