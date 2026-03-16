@@ -1,8 +1,8 @@
 // Events.cpp (MediaLoadscreen)
 #include "Events.h"
-#include <chrono>
-#include <random>
-#include <thread>
+
+std::filesystem::path dllParentPath;
+std::filesystem::path parentIniPath;
 
 /** @brief Event sink for loading menu open/close. */
 class LoadingMenuSink : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
@@ -24,62 +24,68 @@ public:
 				if (g_checkThread.joinable()) {
 					g_checkThread.join();
 				}
-				g_checkThread = std::thread([]() {
-					const std::string folder = dllParentPath.string() + std::string("ALR-V_Videos");
+
+				DecoderHandle decoderHandle = g_decoderHandle;
+
+				g_checkThread = std::thread([decoderHandle]() {
+					const std::string folder = (dllParentPath / "ALR-V_Videos").string();
 					MediaDescriptor descs[256]{};
 					uint32_t count = 0;
 
 					if (MF_DiscoverMedia(folder.c_str(), descs, 256, &count) != MF_Result::Ok || count == 0) {
 						logger::warn("No media found via discovery in {}", folder);
 					}
+
 					// Random selection
 					std::random_device rd;
 					std::mt19937 gen(rd());
 					std::uniform_int_distribution<uint32_t> dist(0, count - 1);
-					MediaDescriptor selectedMediaDescriptor{};
-					selectedMediaDescriptor = descs[dist(gen)];
+					MediaDescriptor selectedMediaDescriptor = descs[dist(gen)];
 
-					
 					MediaCommandPacket commands[16];
 					uint32_t commandCount = 0;
 
 					MF_Result result = MF_ParseMediaINI(
 						parentIniPath.string().c_str(),
-						selectedMediaDescriptor.iniPath,                                                                           // File-specific INI
+						selectedMediaDescriptor.iniPath,
 						commands,
-						16, 
+						16,
 						&commandCount);
 
 					MediaCreateParams createParams{ sizeof(MediaCreateParams), selectedMediaDescriptor.primaryPath, selectedMediaDescriptor.mediaComposition };
 
+					MediaInstanceHandle instanceHandle = -1;
 
 					while (g_menuOpen.load()) {
 						VideoQueryResult videoQueryResult;
-						if (MF_QueryVideo(g_instanceHandle, VideoQueryType::InstanceValid, &videoQueryResult) == MF_Result::Ok && !videoQueryResult.boolValue) {
+						if (MF_QueryVideo(instanceHandle, VideoQueryType::InstanceValid, &videoQueryResult) == MF_Result::Ok && !videoQueryResult.boolValue) {
 
-							if (MF_CreateMediaInstance(g_decoderHandle, &createParams, commands, commandCount, &g_instanceHandle) != MF_Result::Ok) {
+							if (MF_CreateMediaInstance(decoderHandle, &createParams, commands, commandCount, &instanceHandle) != MF_Result::Ok) {
 								logger::error("Failed to recreate video instance");
 								return;
 							}
 
-						} else if (MF_QueryVideo(g_instanceHandle, VideoQueryType::IsPlaying, &videoQueryResult) == MF_Result::Ok && !videoQueryResult.boolValue) {
-							logger::info("Video instance {} ended during loading, restarting", g_instanceHandle);
-							MF_DestroyMediaInstance(g_instanceHandle);
+						}
+						else if (MF_QueryVideo(instanceHandle, VideoQueryType::IsPlaying, &videoQueryResult) == MF_Result::Ok && !videoQueryResult.boolValue) {
+							logger::info("Video instance {} ended during loading, restarting", instanceHandle);
+							MF_DestroyMediaInstance(instanceHandle);
+							instanceHandle = -1;
 							// Play from -1
 							//PlayParams playParams{ -1, repeatSetting::None, 1.0f };
 							//VideoCommandPacket cmd{ VideoCommandType::Play, &playParams };
-							//MF_VideoCommand(g_instanceHandle, &cmd, 1);
+							//MF_VideoCommand(instanceHandle, &cmd, 1);
 						}
 						std::this_thread::sleep_for(std::chrono::milliseconds(20));
 					}
-				});
+					});
 				//            // Get last frame
 				//            VideoQueryResult frameRes;
 				//            int64_t lastFrame = -1;
 				//if (MF_QueryVideo(g_instanceHandle, VideoQueryType::CurrentTime, &frameRes) == MF_Result::Ok) {
 				//	lastFrame = frameRes.floatValue;
 				//            }
-			} else {
+				}
+			else {
 				g_menuOpen.store(false);
 				if (g_checkThread.joinable()) {
 					g_checkThread.join();
@@ -100,7 +106,8 @@ void MessageHandler(F4SE::MessagingInterface::Message* const msg)
 			static LoadingMenuSink sink;
 			ui->RegisterSink<RE::MenuOpenCloseEvent>(&sink);
 			logger::info("MediaLoadscreen: Registered LoadingMenu sink");
-		} else {
+		}
+		else {
 			logger::warn("MediaLoadscreen: UI singleton not available in kGameDataReady");
 		}
 	}

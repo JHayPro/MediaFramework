@@ -2,6 +2,19 @@
 #include "MediaLoadScreensAPI.h"
 #include "Events.h"
 
+std::filesystem::path GetCurrentDLLPath() {
+	HMODULE hm = NULL;
+	// Use the address of this current function to find the containing DLL
+	if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+		GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+		(LPCSTR)&GetCurrentDLLPath, &hm)) {
+		wchar_t path[MAX_PATH];
+		GetModuleFileNameW(hm, path, MAX_PATH);
+		return std::filesystem::path(path);
+	}
+	return "";
+}
+
 bool F4SEAPI Register(RE::BSScript::IVirtualMachine* a_vm)
 {
 	if (!a_vm) {
@@ -86,7 +99,7 @@ F4SE_EXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* const a_f4se
 
 	messaging->RegisterListener(MessageHandler);
 
-	auto fullPath = std::filesystem::path(REL::Module::get().filePath());
+	auto fullPath = GetCurrentDLLPath();
 	if (!std::filesystem::exists(fullPath)) {
 		logger::critical("Failed to get plugin path");
 		return false;
