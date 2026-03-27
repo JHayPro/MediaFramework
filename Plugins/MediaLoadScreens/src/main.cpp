@@ -21,11 +21,11 @@ bool F4SEAPI Register(RE::BSScript::IVirtualMachine* a_vm)
 		return false;
 	}
 
-	const auto obj = "MediaLoadscreen"sv;
-	a_vm->BindNativeMethod(obj, "QueueMediaFile"sv, MediaLoadscreenPapyrus::QueueMediaFile, std::nullopt, false);
-	a_vm->BindNativeMethod(obj, "QueueMediaFolder"sv, MediaLoadscreenPapyrus::QueueMediaFolder, std::nullopt, false);
+	const auto obj = "MediaLoadscreens"sv;
+	a_vm->BindNativeMethod(obj, "QueueMediaFile"sv, MediaLoadScreensPapyrus::QueueMediaFile, std::nullopt, false);
+	a_vm->BindNativeMethod(obj, "QueueMediaFolder"sv, MediaLoadScreensPapyrus::QueueMediaFolder, std::nullopt, false);
 
-	logger::info("All MyPapyrus functions registered!");
+	logger::info("Papyrus functions registered");
 	return true;
 }
 

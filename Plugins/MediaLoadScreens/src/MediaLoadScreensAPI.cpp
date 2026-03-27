@@ -1,11 +1,11 @@
 #include "MediaLoadScreensAPI.h"
 
-bool MediaLoadscreenPapyrus::QueueMediaFile(std::monostate, std::string filePath, int priority, bool persistent)
+bool MediaLoadScreensPapyrus::QueueMediaFile(std::monostate, std::string filePath, int priority, bool persistent)
 {
 	return false;
 }
 
-bool MediaLoadscreenPapyrus::QueueMediaFolder(std::monostate, std::string folderPath, int priority, bool persistent)
+bool MediaLoadScreensPapyrus::QueueMediaFolder(std::monostate, std::string folderPath, int priority, bool persistent)
 {
 	return false;
 }
