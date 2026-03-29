@@ -8,7 +8,6 @@ void MediaLoadScreensPapyrus::test(std::monostate){
 
 bool MediaLoadScreensPapyrus::QueueMediaFileOrFolder(std::monostate, RE::BSScript::structure_wrapper<"MediaLoadScreens", "MediaLoadScreensOptions"> options, std::string path, int version, int priority)
 {
-	Sleep(8000);
 	auto fullPath = parentMediaPath / path;
 	if (path.empty()) {
 		logger::warn("QueueMediaFile: empty path");
