@@ -11,11 +11,11 @@
 extern "C"
 {
 	// Hook for backwards compatibility with Legacy ALR
-	bool MLS_API QueueMediaFolderALR(const char* filePath, int priority);
+	bool MLS_API QueueMediaFolderALR(const char* folderPath, int priority);
 }
 
 namespace MediaLoadScreensPapyrus
 {
-	bool QueueMediaFile(std::monostate, std::string filePath, int priority, bool persistent);
-	bool QueueMediaFolder(std::monostate, std::string folderPath, int priority, bool persistent);
+	bool QueueMediaFileOrFolder(std::monostate, RE::BSScript::structure_wrapper<"MediaLoadScreens", "MediaLoadScreensOptions"> options, std::string path, int version, int priority);
+	void test(std::monostate);
 }

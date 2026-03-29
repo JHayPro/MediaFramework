@@ -1,15 +1,19 @@
-ScriptName ALR_Video Extends Quest
-Import MediaLoadscreens
-
-String Property MediaFolderPath = "ALR_Video" Auto
-Int Property Priority = 0 Auto
-Bool Property Persistent = True Auto
+ScriptName ALR_Video
+Import MediaLoadScreens
 
 Event OnInit()
     Debug.Trace("[ALR_Video] OnInit()")
     Bool success = False
 
-    success = QueueMediaFolder(MediaFolderPath, Priority, Persistent)
+    MediaLoadScreensOptions options
+    options.persistentPerInstance = false
+    options.persistentCrossInstance = false
+
+    String MediaFolderPath = "ALR_Video"
+    Int MediaLoadscreensVersion = 0
+    Int Priority = 0
+
+    success = MediaLoadScreens.QueueMediaFileOrFolder(options, MediaFolderPath, MediaLoadscreensVersion, Priority)
     Debug.Trace("[ALR_Video] Queued FOLDER: " + MediaFolderPath)
 
     If (success)

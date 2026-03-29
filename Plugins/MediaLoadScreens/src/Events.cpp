@@ -1,8 +1,13 @@
 // Events.cpp (MediaLoadscreen)
 #include "Events.h"
 
-std::filesystem::path dllParentPath;
+std::filesystem::path parentMediaPath;
 std::filesystem::path parentIniPath;
+std::array<std::vector<LoadScreenMedia>, 5> mediaQueue;
+std::mutex g_mediaQueueMutex;
+
+std::random_device rd;
+std::mt19937 gen(rd());
 
 /** @brief Event sink for loading menu open/close. */
 class LoadingMenuSink : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
@@ -28,19 +33,21 @@ public:
 				DecoderHandle decoderHandle = g_decoderHandle;
 
 				g_checkThread = std::thread([decoderHandle]() {
-					const std::string folder = (dllParentPath / "ALR-V_Videos").string();
-					MediaDescriptor descs[256]{};
-					uint32_t count = 0;
+					LoadScreenMedia selectedLoadScreenMedia;
 
-					if (MF_DiscoverMedia(folder.c_str(), descs, 256, &count) != MF_Result::Ok || count == 0) {
-						logger::warn("No media found via discovery in {}", folder);
+					for (int priority = 4; priority >= 0; --priority) {
+						if (!mediaQueue[priority].empty()) {
+							std::uniform_int_distribution<> dis(0, mediaQueue[priority].size() - 1);
+							int index = dis(gen);
+							selectedLoadScreenMedia = mediaQueue[priority][index];
+							if (!selectedLoadScreenMedia.args.persistent) {
+								std::swap(mediaQueue[priority][index], mediaQueue[priority].back());
+								mediaQueue[priority].pop_back();
+							}
+							break;
+						}
 					}
-
-					// Random selection
-					std::random_device rd;
-					std::mt19937 gen(rd());
-					std::uniform_int_distribution<uint32_t> dist(0, count - 1);
-					MediaDescriptor selectedMediaDescriptor = descs[dist(gen)];
+					MediaDescriptor selectedMediaDescriptor = selectedLoadScreenMedia.mediaDescriptor;
 
 					MediaCommandPacket commands[16];
 					uint32_t commandCount = 0;
@@ -59,12 +66,10 @@ public:
 					while (g_menuOpen.load()) {
 						VideoQueryResult videoQueryResult;
 						if (MF_QueryVideo(instanceHandle, VideoQueryType::InstanceValid, &videoQueryResult) == MF_Result::Ok && !videoQueryResult.boolValue) {
-
 							if (MF_CreateMediaInstance(decoderHandle, &createParams, commands, commandCount, &instanceHandle) != MF_Result::Ok) {
 								logger::error("Failed to recreate video instance");
 								return;
 							}
-
 						}
 						else if (MF_QueryVideo(instanceHandle, VideoQueryType::IsPlaying, &videoQueryResult) == MF_Result::Ok && !videoQueryResult.boolValue) {
 							logger::info("Video instance {} ended during loading, restarting", instanceHandle);
@@ -105,10 +110,10 @@ void MessageHandler(F4SE::MessagingInterface::Message* const msg)
 		if (ui) {
 			static LoadingMenuSink sink;
 			ui->RegisterSink<RE::MenuOpenCloseEvent>(&sink);
-			logger::info("MediaLoadscreen: Registered LoadingMenu sink");
+			logger::info("Registered LoadingMenu sink");
 		}
 		else {
-			logger::warn("MediaLoadscreen: UI singleton not available in kGameDataReady");
+			logger::warn("UI singleton not available in kGameDataReady");
 		}
 	}
 }

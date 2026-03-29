@@ -21,9 +21,9 @@ bool F4SEAPI Register(RE::BSScript::IVirtualMachine* a_vm)
 		return false;
 	}
 
-	const auto obj = "MediaLoadscreens"sv;
-	a_vm->BindNativeMethod(obj, "QueueMediaFile"sv, MediaLoadScreensPapyrus::QueueMediaFile, std::nullopt, false);
-	a_vm->BindNativeMethod(obj, "QueueMediaFolder"sv, MediaLoadScreensPapyrus::QueueMediaFolder, std::nullopt, false);
+	const auto obj = "MediaLoadScreens"sv;
+	a_vm->BindNativeMethod(obj, "QueueMediaFileOrFolder"sv, MediaLoadScreensPapyrus::QueueMediaFileOrFolder, std::nullopt, false);
+	a_vm->BindNativeMethod(obj, "test"sv, MediaLoadScreensPapyrus::test, std::nullopt, false);
 
 	logger::info("Papyrus functions registered");
 	return true;
@@ -104,8 +104,9 @@ F4SE_EXPORT bool F4SEAPI F4SEPlugin_Load(const F4SE::LoadInterface* const a_f4se
 		logger::critical("Failed to get plugin path");
 		return false;
 	}
-	dllParentPath = fullPath.parent_path();
+	auto dllParentPath = fullPath.parent_path();
 	parentIniPath = dllParentPath.string() + "\\" + Version::PROJECT.data() + ".ini";
+	parentMediaPath = dllParentPath.string() + "\\MediaFramework_Media\\MediaLoadScreens\\";
 
 	logger::info("Plugin loaded successfully");
 
