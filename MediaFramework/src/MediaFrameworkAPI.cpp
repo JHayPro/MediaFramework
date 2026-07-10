@@ -250,6 +250,7 @@ static MF_Result MediaCommand_Internal(
 				instance->renderY = render.y;
 				instance->renderW = render.w;
 				instance->renderH = render.h;
+                instance->scaleMode = render.scaleMode;
 				if (decoder->currentInstanceHandle == instanceHandle) {
 					instance->vbDirty = true;
 				}

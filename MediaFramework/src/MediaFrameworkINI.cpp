@@ -139,9 +139,7 @@ namespace MediaFramework::INI
         float fadeColorRGBA[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
         float fadeInSeconds = 0.0f;
         float fadeOutSeconds = 0.0f;
-        ScaleModes scaleMode = ScaleModes::Fit;
-        bool maintainAspect = true;
-        bool blackBars = true;
+        ScaleMode scaleMode = ScaleMode::Fit;
 
         // [Audio]
         bool enableAudio = true;
@@ -206,9 +204,7 @@ namespace MediaFramework::INI
             renderCmd.params.renderMode.customMenuName = 
                 outResult.ownedCustomMenuName.empty() ? nullptr : outResult.ownedCustomMenuName.c_str();
             
-            renderCmd.params.renderMode.scaleMode = config.scaleMode;
-            renderCmd.params.renderMode.maintainAspect = config.maintainAspect;
-            renderCmd.params.renderMode.blackBars = config.blackBars;
+            renderCmd.params.renderMode.scaleMode = config.scaleMode;;
             
             outCommands.push_back(renderCmd);
         }
@@ -370,40 +366,20 @@ namespace MediaFramework::INI
             }
         );
 
-        schema.AddField<ScaleModes>(
-            "Video", "ScaleMode", 1, ScaleModes::Fit,
+        schema.AddField<ScaleMode>(
+            "Video", "ScaleMode", 1, ScaleMode::Fit,
             &config.scaleMode,
-            [](const IniValue& v, ScaleModes& out, const SchemaContext&)
+            [](const IniValue& v, ScaleMode& out, const SchemaContext&)
             {
                 if (!v.exists) return;
                 
-                static const std::unordered_map<std::string, ScaleModes> mapping = {
-                    {"Fit", ScaleModes::Fit},
-                    {"Fill", ScaleModes::Fill},
-                    {"Stretch", ScaleModes::Stretch}
+                static const std::unordered_map<std::string, ScaleMode> mapping = {
+                    {"Fit", ScaleMode::Fit},
+                    {"Fill", ScaleMode::Fill},
+                    {"Stretch", ScaleMode::Stretch}
                 };
                 
-                out = Parsers::ParseEnum(v.raw, mapping, ScaleModes::Fit);
-            }
-        );
-
-        schema.AddField<bool>(
-            "Video", "MaintainAspect", 1, true,
-            &config.maintainAspect,
-            [](const IniValue& v, bool& out, const SchemaContext&)
-            {
-                if (!v.exists) return;
-                out = Parsers::ParseBool(v.raw, true);
-            }
-        );
-
-        schema.AddField<bool>(
-            "Video", "BlackBars", 1, true,
-            &config.blackBars,
-            [](const IniValue& v, bool& out, const SchemaContext&)
-            {
-                if (!v.exists) return;
-                out = Parsers::ParseBool(v.raw, true);
+                out = Parsers::ParseEnum(v.raw, mapping, ScaleMode::Fit);
             }
         );
 

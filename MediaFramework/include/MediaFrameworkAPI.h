@@ -174,13 +174,6 @@ extern "C"
 		LoadingMenu,
 	};
 
-	enum class ScaleModes : uint32_t
-	{
-		Fit,
-		Fill,
-		Stretch,
-	};
-
 	struct RenderModeParams
 	{
 		uint32_t size; // Set to sizeof(RenderModeParams)
@@ -190,9 +183,7 @@ extern "C"
 		RE::UI_DEPTH_PRIORITY depth;
 		HookedMenuName menuName;
 		const char* customMenuName;
-		ScaleModes scaleMode;
-		bool maintainAspect;
-		bool blackBars;
+		ScaleMode scaleMode;
 	};
 
 	struct InputParams

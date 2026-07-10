@@ -8,6 +8,17 @@ bool CompileShadersAndInputLayout(ID3D11Device* device)
 		return false;
 	}
 
+    D3D11_BUFFER_DESC cbd{};
+    cbd.ByteWidth      = 16;                    // 4 floats
+    cbd.Usage          = D3D11_USAGE_DYNAMIC;
+    cbd.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
+    cbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+    if (FAILED(device->CreateBuffer(&cbd, nullptr, g_resources.videoCB.GetAddressOf()))) {
+        logger::error("Failed to create video constant buffer");
+        return false;
+    }
+
 	ComPtr<ID3DBlob> vsBlob, psBlob, errBlob;
 	bool compiledVS = false;
 	bool compiledPS = false;

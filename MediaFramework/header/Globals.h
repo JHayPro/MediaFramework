@@ -217,6 +217,7 @@ struct MediaInstance
 	MediaComposition mediaComposition { VisualType::None, AudioType::None};
     
     // Playback parameters
+	ScaleMode scaleMode{ ScaleMode::Stretch };
     int64_t startFrame{ -1 };
     bool loop{ true };
     float volume{ 1.0f };
@@ -257,6 +258,7 @@ struct MediaInstance
         isActive.store(false);
 		finishedCallback = nullptr;
         callbackUserData = nullptr;
+		scaleMode = ScaleMode::Stretch;
         startFrame = -1;
         loop = true;
         volume = 1.0f;
@@ -281,6 +283,7 @@ struct VideoResources
 	ComPtr<ID3D11RasterizerState> raster;
 	ComPtr<ID3D11DepthStencilState> depth;
 	ComPtr<ID3D11SamplerState> sampler;
+	ComPtr<ID3D11Buffer> videoCB;
 
 	using PresentFn = HRESULT(__stdcall*)(IDXGISwapChain*, UINT, UINT);
 	PresentFn originalPresent{ nullptr };

@@ -107,51 +107,49 @@ void RenderVideosAtStage(RenderPipelineStage stage, ID3D11DeviceContext* ctx)
         }
         
         // Update VB if needed
-		if (instance.vbDirty || !instance.quadVB) {
+        if (instance.vbDirty || !instance.quadVB) {
             D3D11_BUFFER_DESC bd{};
             bd.ByteWidth = sizeof(Vertex) * 6;
             bd.Usage = D3D11_USAGE_DYNAMIC;
             bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
             bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-            
+
             ComPtr<ID3D11Device> device;
             ctx->GetDevice(device.GetAddressOf());
-			if (device && !instance.quadVB) {
-				if (FAILED(device->CreateBuffer(&bd, nullptr, instance.quadVB.GetAddressOf()))) {
-					logger::error("Failed to create VB for instance {}", instance.id);
+            if (device && !instance.quadVB) {
+                if (FAILED(device->CreateBuffer(&bd, nullptr, instance.quadVB.GetAddressOf()))) {
+                    logger::error("Failed to create VB for instance {}", instance.id);
                     continue;
                 }
             }
-            
+
             D3D11_MAPPED_SUBRESOURCE msr{};
-			if (SUCCEEDED(ctx->Map(instance.quadVB.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr))) {
-				Vertex* verts = static_cast<Vertex*>(msr.pData);
-                
-                float left = -1.0f, right = 1.0f, top = 1.0f, bottom = -1.0f;
-				if (instance.renderMode == RenderMode::Window) {
-                    left = 2.0f * instance.renderX - 1.0f;
-                    right = 2.0f * (instance.renderX + instance.renderW) - 1.0f;
-                    top = 1.0f - 2.0f * instance.renderY;
-                    bottom = 1.0f - 2.0f * (instance.renderY + instance.renderH);
+            if (SUCCEEDED(ctx->Map(instance.quadVB.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr))) {
+                Vertex* verts = static_cast<Vertex*>(msr.pData);
+
+                float left   = -1.0f;
+                float right  =  1.0f;
+                float top    =  1.0f;
+                float bottom = -1.0f;
+
+                if (instance.renderMode == RenderMode::Window) {
+                    left   =  2.0f * instance.renderX - 1.0f;
+                    right  =  2.0f * (instance.renderX + instance.renderW) - 1.0f;
+                    top    =  1.0f - 2.0f * instance.renderY;
+                    bottom =  1.0f - 2.0f * (instance.renderY + instance.renderH);
                 }
-                
-                verts[0].pos[0] = left;  verts[0].pos[1] = top;    verts[0].pos[2] = 0.0f; verts[0].pos[3] = 1.0f;
-                verts[0].uv[0] = 0.0f;   verts[0].uv[1] = 0.0f;
-                
-                verts[1].pos[0] = right; verts[1].pos[1] = top;    verts[1].pos[2] = 0.0f; verts[1].pos[3] = 1.0f;
-                verts[1].uv[0] = 1.0f;   verts[1].uv[1] = 0.0f;
-                
-                verts[2].pos[0] = left;  verts[2].pos[1] = bottom; verts[2].pos[2] = 0.0f; verts[2].pos[3] = 1.0f;
-                verts[2].uv[0] = 0.0f;   verts[2].uv[1] = 1.0f;
-                
+
+                // Always full target rectangle + UV 0-1.
+                // All Fit / Fill / Stretch logic lives in the shader now.
+                verts[0] = { {left,  top,    0.f, 1.f}, {0.f, 0.f} };
+                verts[1] = { {right, top,    0.f, 1.f}, {1.f, 0.f} };
+                verts[2] = { {left,  bottom, 0.f, 1.f}, {0.f, 1.f} };
                 verts[3] = verts[2];
                 verts[4] = verts[1];
-                
-                verts[5].pos[0] = right; verts[5].pos[1] = bottom; verts[5].pos[2] = 0.0f; verts[5].pos[3] = 1.0f;
-                verts[5].uv[0] = 1.0f;   verts[5].uv[1] = 1.0f;
-                
+                verts[5] = { {right, bottom, 0.f, 1.f}, {1.f, 1.f} };
+
                 ctx->Unmap(instance.quadVB.Get(), 0);
-				instance.vbDirty = false;
+                instance.vbDirty = false;
             }
         }
         
@@ -186,6 +184,60 @@ void RenderVideosAtStage(RenderPipelineStage stage, ID3D11DeviceContext* ctx)
         ID3D11SamplerState* samps[] = { g_resources.sampler.Get() };
         ctx->PSSetSamplers(0, 1, samps);
         
+        // ------------------------------------------------------------
+        // Update letterbox constant buffer
+        // ------------------------------------------------------------
+        if (g_resources.videoCB)
+        {
+            // Current viewport (for correct pixel aspect)
+            D3D11_VIEWPORT vp{};
+            UINT num = 1;
+            ctx->RSGetViewports(&num, &vp);
+            const float screenW = (vp.Width  > 0.f) ? vp.Width  : 1.f;
+            const float screenH = (vp.Height > 0.f) ? vp.Height : 1.f;
+
+            // Target rect in NDC
+            float left = -1.f, right = 1.f, top = 1.f, bottom = -1.f;
+            if (instance.renderMode == RenderMode::Window) {
+                left   =  2.f * instance.renderX - 1.f;
+                right  =  2.f * (instance.renderX + instance.renderW) - 1.f;
+                top    =  1.f - 2.f * instance.renderY;
+                bottom =  1.f - 2.f * (instance.renderY + instance.renderH);
+            }
+
+            const float ndcW = right - left;
+            const float ndcH = top - bottom;
+            const float targetAspect = (ndcW > 0.f && ndcH > 0.f)
+                ? (ndcW / ndcH) * (screenW / screenH)
+                : 1.f;
+
+            const float mediaAspect = (instance.mediaHeight > 0)
+                ? static_cast<float>(instance.mediaWidth) / static_cast<float>(instance.mediaHeight)
+                : 1.f;
+
+            struct alignas(16) CBData {
+                float mediaAspect;
+                float targetAspect;
+                uint32_t scaleMode;   // 0=Fit, 1=Fill, 2=Stretch
+                uint32_t pad;
+            } cb = {
+                mediaAspect,
+                targetAspect,
+                static_cast<uint32_t>(instance.scaleMode),
+                0
+            };
+
+            D3D11_MAPPED_SUBRESOURCE mapped{};
+            if (SUCCEEDED(ctx->Map(g_resources.videoCB.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) {
+                memcpy(mapped.pData, &cb, sizeof(cb));
+                ctx->Unmap(g_resources.videoCB.Get(), 0);
+            }
+
+            ID3D11Buffer* cbs[] = { g_resources.videoCB.Get() };
+            ctx->VSSetConstantBuffers(0, 1, cbs);
+            // (optional) ctx->PSSetConstantBuffers(0, 1, cbs);
+        }
+
         ctx->Draw(6, 0);
         
         ID3D11ShaderResourceView* nullSrv[1] = { nullptr };
