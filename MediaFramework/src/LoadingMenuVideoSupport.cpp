@@ -102,6 +102,27 @@ namespace LoadingMenuVideo
 
         return true;
     }
+
+    bool EnsureOffscreenTarget(ID3D11Device* device)
+    {
+        if (g_loadingMenuState.offscreenReady)
+            return true;
+
+        // Create at 1920x1080 (16:9). You can change this later if needed.
+        constexpr uint32_t OFFSCREEN_WIDTH = 1920;
+        constexpr uint32_t OFFSCREEN_HEIGHT = 1080;
+
+        if (!g_loadingMenuState.offscreenRenderer.Ensure(device, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT))
+        {
+            logger::error("LoadingMenuVideo: Failed to create offscreen render target");
+            return false;
+        }
+
+        g_loadingMenuState.offscreenReady = true;
+        logger::info("LoadingMenuVideo: Offscreen render target created ({}x{})",
+            OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+        return true;
+    }
   
     void UpdateEngineTexture(MediaInstance& instance, ID3D11DeviceContext* ctx)
     {
@@ -111,7 +132,9 @@ namespace LoadingMenuVideo
     void CleanupEngineTexture()
     {
         // std::scoped_lock lock(g_loadingMenuMutex);
-      
+        g_loadingMenuState.offscreenRenderer.Cleanup();
+        g_loadingMenuState.offscreenReady = false;
+
         g_loadingMenuState.helper.Cleanup();
         g_loadingMenuState.externalTexture.ReleaseTexture(); // Cleanup texture binding
         //g_loadingMenuState.niTexture.reset();
@@ -161,78 +184,107 @@ namespace LoadingMenuVideo
   
     void HookedAdvanceMovie(RE::IMenu* menu, float a_deltaTime, std::uint32_t a_currentTime)
     {
-        // Check if this is LoadingMenu
-        bool isLoadingMenu = true; // Since hook is on LoadingMenu-specific impl
+        static uint64_t s_lastInstanceHandle = 0;
 
-		static uint64_t s_lastInstanceHandle = 0;
+        MediaInstance* instance = GetActiveLoadingVideoInstance();
 
-		MediaInstance* instance = GetActiveLoadingVideoInstance();
-		if (instance && instance->id != s_lastInstanceHandle) {
-			CleanupEngineTexture();  // kill everything from previous load
-			s_lastInstanceHandle = instance->id;
-			logger::info("LoadingMenuVideo: New instance detected ({}), cleaned old engine texture", instance->id);
-		}
-       
-        if (isLoadingMenu && ShouldRenderLoadingVideo()) {
-            try {
+        if (instance && instance->id != s_lastInstanceHandle)
+        {
+            CleanupEngineTexture();           // Clean up previous video
+            s_lastInstanceHandle = instance->id;
+            logger::info("LoadingMenuVideo: New loading video instance detected ({})", instance->id);
+        }
+
+        if (instance && instance->isActive.load())
+        {
+            try
+            {
                 std::scoped_lock lock(g_loadingMenuMutex);
-              
-                // Update state
+
                 g_loadingMenuState.loadingMenuPtr = menu;
-                //g_loadingMenuState.currentMenuMovie = menu->uiMovie.get(); // For identifying in AppendShaderFXInfos
-              
-                // Get active loading video instance
-                MediaInstance* instance = GetActiveLoadingVideoInstance();
-				if (instance && instance->isActive.load()) {
-					auto renderer = RE::BSGraphics::RendererData::GetSingleton();
-					if (!renderer) {
-						logger::error("LoadingMenuVideo: Failed to get renderer");
-						OriginalAdvanceMovie(menu, a_deltaTime, a_currentTime);
-						return;
-					}
-                    ID3D11Device* device = reinterpret_cast<ID3D11Device*>(renderer->device);
-					ComPtr<ID3D11DeviceContext> ctx;
-					device->GetImmediateContext(ctx.GetAddressOf());
 
-					if (instance->mediaComposition.visualType == VisualType::Image) {
-						if (EnsureImageTexture(device, instance->mediaPath, *instance)) {
-							if (EnsureEngineTexture(*instance, device)) {
-								UpdateEngineTexture(*instance, ctx.Get());
-							}
-						}
-					} else {
-						auto decoderIt = g_decoders.find(instance->decoderHandle);
-						if (decoderIt != g_decoders.end()) {
-							Decoder& decoder = *decoderIt->second;
-                      
-							if (decoder.isPlaying.load() && decoder.isInitialized.load()) {
-								if (device && ctx) {
-									if (!decoder.videoHeader) {
-										logger::error("Decoder does not have a video header {}", decoder.id);
-									} else {
-										// Ensure decoder texture exists
-										if (decoder.videoHeader && EnsureTexture(device, decoder, *instance)) {
-											// Update decoder texture from shared memory
-											UpdateTextureFromShared(ctx.Get(), decoder, *instance);
+                auto renderer = RE::BSGraphics::RendererData::GetSingleton();
+                if (!renderer)
+                {
+                    OriginalAdvanceMovie(menu, a_deltaTime, a_currentTime);
+                    return;
+                }
 
-											// Ensure engine texture exists and is registered with SWF
-											if (EnsureEngineTexture(*instance, device)) {
-												// Copy decoder texture to engine texture
-												UpdateEngineTexture(*instance, ctx.Get());
-											}
-										}
-									}
-								}
-							}
-						}
+                ID3D11Device* device = reinterpret_cast<ID3D11Device*>(renderer->device);
+                ComPtr<ID3D11DeviceContext> ctx;
+                device->GetImmediateContext(ctx.GetAddressOf());
+
+                if (!device || !ctx)
+                {
+                    OriginalAdvanceMovie(menu, a_deltaTime, a_currentTime);
+                    return;
+                }
+
+                // === Ensure offscreen render target exists ===
+                if (!EnsureOffscreenTarget(device))
+                {
+                    OriginalAdvanceMovie(menu, a_deltaTime, a_currentTime);
+                    return;
+                }
+
+                // === IMAGE OR VIDEO ===
+                bool renderedSuccessfully = false;
+
+                if (instance->mediaComposition.visualType == VisualType::Image)
+                {
+                    if (EnsureImageTexture(device, instance->mediaPath, *instance))
+                    {
+                        renderedSuccessfully = g_loadingMenuState.offscreenRenderer.Render(
+                            ctx.Get(),
+                            *instance,
+                            16.0f / 9.0f
+                        );
                     }
                 }
-            } catch (const std::exception& e) {
+                else
+                {
+                    auto decoderIt = g_decoders.find(instance->decoderHandle);
+                    if (decoderIt != g_decoders.end())
+                    {
+                        Decoder& decoder = *decoderIt->second;
+
+                        if (decoder.isPlaying.load() && decoder.isInitialized.load())
+                        {
+                            if (EnsureTexture(device, decoder, *instance))
+                            {
+                                UpdateTextureFromShared(ctx.Get(), decoder, *instance);
+
+                                renderedSuccessfully = g_loadingMenuState.offscreenRenderer.Render(
+                                    ctx.Get(),
+                                    *instance,
+                                    16.0f / 9.0f
+                                );
+                            }
+                        }
+                    }
+                }
+
+                // === Setup Scaleform side + Copy result ===
+                if (renderedSuccessfully)
+                {
+                    // This is still needed to create the BSGraphics::Texture + NiTexture
+                    if (EnsureEngineTexture(*instance, device))
+                    {
+                        // Now copy from our offscreen render target into the engine texture
+                        g_loadingMenuState.helper.Update(
+                            ctx.Get(),
+                            g_loadingMenuState.offscreenRenderer.GetTexture()
+                        );
+                    }
+                }
+            }
+            catch (const std::exception& e)
+            {
                 logger::error("LoadingMenuVideo: Exception in HookedAdvanceMovie: {}", e.what());
             }
         }
-      
-        // Call original
+
+        // Call original function
         OriginalAdvanceMovie(menu, a_deltaTime, a_currentTime);
     }
   

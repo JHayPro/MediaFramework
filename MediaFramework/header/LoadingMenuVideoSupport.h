@@ -2,6 +2,7 @@
 #pragma once
 #include "PCH.h"
 #include "Globals.h"
+#include "OffscreenRenderer.h"
 
 namespace LoadingMenuVideo
 {
@@ -22,6 +23,9 @@ namespace LoadingMenuVideo
 
         uint64_t currentInstanceHandle = 0;
         bool textureReady = false;
+
+        OffscreenRenderer offscreenRenderer;
+        bool offscreenReady = false;
         
         void Reset()
         {
@@ -44,9 +48,10 @@ namespace LoadingMenuVideo
     
     // Engine texture management (similar to MediaFrameworkMenu)
     bool EnsureEngineTexture(MediaInstance& instance, ID3D11Device* device);
+    bool EnsureOffscreenTarget(ID3D11Device* device);
     void UpdateEngineTexture(MediaInstance& instance, ID3D11DeviceContext* ctx);
     void CleanupEngineTexture();
-    
+
     // Helper to check if we should render video on loading screen
     bool ShouldRenderLoadingVideo();
     MediaInstance* GetActiveLoadingVideoInstance();
