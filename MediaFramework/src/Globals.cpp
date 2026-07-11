@@ -18,6 +18,13 @@ cbuffer VideoParams : register(b0)
     float mediaAspect;   // mediaWidth / mediaHeight
     float targetAspect;  // real pixel aspect of destination rect
     uint  scaleMode;     // 0 = Fit, 1 = Fill, 2 = Stretch
+    float fadeInSeconds;
+    
+    float4 fadeColor;     // RGBA (what you fade to/from)
+
+    float fadeOutSeconds;
+    float currentTime;      // seconds since this video instance started playing
+    float duration;         // total video length in seconds (0 = unknown/infinite)
     uint  _pad;
 };
 
@@ -72,10 +79,30 @@ SamplerState samp0 : register(s0);
 
 float4 PSMain(PSIn IN) : SV_Target
 {
-    // Only Fit mode produces UVs outside [0,1] → turn them into black bars
-    if (any(IN.uv < 0.0 || IN.uv > 1.0))
-        return float4(0, 0, 0, 1);
-    return tex0.Sample(samp0, IN.uv);
+    float4 videoColor = tex0.Sample(samp0, IN.uv);
+
+    // Compute fade factor (1.0 = full video, 0.0 = fadeColor)
+    float fadeFactor = 1.0f;
+
+    // Fade in
+    if (fadeInSeconds > 0.0f && currentTime < fadeInSeconds)
+    {
+        fadeFactor *= saturate(currentTime / fadeInSeconds);
+    }
+
+    // Fade out (only if we know the duration)
+    if (fadeOutSeconds > 0.0f && duration > 0.0f && currentTime > duration - fadeOutSeconds)
+    {
+        float outFactor = saturate((duration - currentTime) / fadeOutSeconds);
+        fadeFactor *= outFactor;
+    }
+
+    // Lerp from fadeColor → videoColor using the fade factor
+    float4 finalColor = lerp(float4(fadeColor[0], fadeColor[1], fadeColor[2], fadeColor[3]),
+                             videoColor,
+                             fadeFactor);
+
+    return finalColor;
 }
 )";
 

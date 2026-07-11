@@ -4,14 +4,6 @@
 #include "Globals.h"
 #include "SharedMemoryUtils.h"
 
-inline uint32_t GetTickCountMilliseconds()
-{
-    return static_cast<uint32_t>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now().time_since_epoch())
-            .count());
-}
-
 bool InitializeDecoder(Decoder& decoder, DecoderComposition decoderComposition)
 {
     char dllPath[MAX_PATH];
@@ -183,6 +175,7 @@ bool PlayVideoOnDecoder(Decoder& decoder, MediaInstance& instance)
 	instance.vbDirty = true;
     instance.isActive.store(true);
     decoder.isPlaying.store(true);
+    instance.startTime = GetTickCountMilliseconds();
     
     // Send audio play command if audio decoder present
     if (decoder.audioHeader && decoder.audioProcess) {

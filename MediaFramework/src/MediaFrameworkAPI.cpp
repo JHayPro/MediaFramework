@@ -193,6 +193,7 @@ static MF_Result MediaCommand_Internal(
 				if (instance->mediaComposition.visualType == VisualType::Image) {
 					instance->vbDirty = true;
 					instance->isActive.store(true);
+                    instance->startTime = GetTickCountMilliseconds();
 				} else if (!PlayVideoOnDecoder(*decoder, *instance)) {
 					return MF_Result::InternalError;
 				}
@@ -235,8 +236,7 @@ static MF_Result MediaCommand_Internal(
                 if (fade.size != sizeof(FadeParams)) {
                     return MF_Result::InvalidArgument;
                 }
-                // TODO: Implement
-                logger::warn("SetFade command TODO for instance {}", instanceHandle);
+                instance->fadeParams = fade;
                 break;
             }
 			case MediaCommandType::SetRenderMode: {

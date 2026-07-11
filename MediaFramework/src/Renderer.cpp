@@ -216,14 +216,35 @@ void RenderVideosAtStage(RenderPipelineStage stage, ID3D11DeviceContext* ctx)
                 : 1.f;
 
             struct alignas(16) CBData {
-                float mediaAspect;
-                float targetAspect;
-                uint32_t scaleMode;   // 0=Fit, 1=Fill, 2=Stretch
-                uint32_t pad;
-            } cb = {
+                float     mediaAspect;
+                float     targetAspect;
+                uint32_t  scaleMode;
+                float     fadeInSeconds;
+                float     fadeColor[4];
+                float     fadeOutSeconds;
+                float     currentTime;
+                float     duration;
+                uint32_t  pad;        // pads to exactly 64 bytes
+            };
+
+            auto now = GetTickCountMilliseconds();
+            float currentPlaybackTime = static_cast<float>(now - instance.startTime) / 1000;
+
+            CBData cb = {
                 mediaAspect,
                 targetAspect,
                 static_cast<uint32_t>(instance.scaleMode),
+
+                instance.fadeParams.fadeInSeconds,
+                {
+                    instance.fadeParams.color[0],
+                    instance.fadeParams.color[1],
+                    instance.fadeParams.color[2],
+                    instance.fadeParams.color[3]
+                },
+                instance.fadeParams.fadeOutSeconds,
+                currentPlaybackTime,
+                instance.duration,
                 0
             };
 
@@ -235,7 +256,7 @@ void RenderVideosAtStage(RenderPipelineStage stage, ID3D11DeviceContext* ctx)
 
             ID3D11Buffer* cbs[] = { g_resources.videoCB.Get() };
             ctx->VSSetConstantBuffers(0, 1, cbs);
-            // (optional) ctx->PSSetConstantBuffers(0, 1, cbs);
+            ctx->PSSetConstantBuffers(0, 1, cbs);
         }
 
         ctx->Draw(6, 0);

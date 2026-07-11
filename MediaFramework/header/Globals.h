@@ -232,6 +232,10 @@ struct MediaInstance
     float renderW{ 1.0f };
     float renderH{ 1.0f };
 
+	FadeParams fadeParams{};
+	uint32_t startTime = 0;
+	uint32_t duration = 0;
+
 	// GPU resources (instance-owned)
 	ComPtr<ID3D11Texture2D> mediaTexture;
 	ComPtr<ID3D11ShaderResourceView> srv;
@@ -354,4 +358,12 @@ static MediaInstance* GetMediaInstance(MediaInstanceHandle handle)
 {
 	auto it = g_mediaInstances.find(handle);
 	return (it != g_mediaInstances.end()) ? &it->second : nullptr;
+}
+
+inline uint32_t GetTickCountMilliseconds()
+{
+	return static_cast<uint32_t>(
+		std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::steady_clock::now().time_since_epoch())
+		.count());
 }

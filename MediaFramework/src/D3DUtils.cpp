@@ -9,7 +9,7 @@ bool CompileShadersAndInputLayout(ID3D11Device* device)
 	}
 
     D3D11_BUFFER_DESC cbd{};
-    cbd.ByteWidth      = 16;                    // 4 floats
+    cbd.ByteWidth      = 256;
     cbd.Usage          = D3D11_USAGE_DYNAMIC;
     cbd.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
     cbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
