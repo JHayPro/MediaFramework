@@ -184,9 +184,6 @@ void RenderVideosAtStage(RenderPipelineStage stage, ID3D11DeviceContext* ctx)
         ID3D11SamplerState* samps[] = { g_resources.sampler.Get() };
         ctx->PSSetSamplers(0, 1, samps);
         
-        // ------------------------------------------------------------
-        // Update letterbox constant buffer
-        // ------------------------------------------------------------
         if (g_resources.videoCB)
         {
             // Current viewport (for correct pixel aspect)
@@ -224,7 +221,7 @@ void RenderVideosAtStage(RenderPipelineStage stage, ID3D11DeviceContext* ctx)
                 float     fadeOutSeconds;
                 float     currentTime;
                 float     duration;
-                uint32_t  pad;        // pads to exactly 64 bytes
+                uint32_t  pad;
             };
 
             auto now = GetTickCountMilliseconds();

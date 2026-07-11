@@ -81,26 +81,27 @@ float4 PSMain(PSIn IN) : SV_Target
 {
     float4 videoColor = tex0.Sample(samp0, IN.uv);
 
-    // Compute fade factor (1.0 = full video, 0.0 = fadeColor)
     float fadeFactor = 1.0f;
 
-    // Fade in
-    if (fadeInSeconds > 0.0f && currentTime < fadeInSeconds)
+    // === Smooth fade in ===
+    if (fadeInSeconds > 0.0f)
     {
-        fadeFactor *= saturate(currentTime / fadeInSeconds);
+        fadeFactor *= smoothstep(0.0f, fadeInSeconds, currentTime);
     }
 
-    // Fade out (only if we know the duration)
-    if (fadeOutSeconds > 0.0f && duration > 0.0f && currentTime > duration - fadeOutSeconds)
+    // === Smooth fade out ===
+    if (fadeOutSeconds > 0.0f && duration > 0.0f)
     {
-        float outFactor = saturate((duration - currentTime) / fadeOutSeconds);
-        fadeFactor *= outFactor;
+        float timeLeft = duration - currentTime;
+        float outProgress = saturate(timeLeft / fadeOutSeconds);
+        fadeFactor *= smoothstep(0.0f, 1.0f, outProgress);
     }
 
-    // Lerp from fadeColor → videoColor using the fade factor
-    float4 finalColor = lerp(float4(fadeColor[0], fadeColor[1], fadeColor[2], fadeColor[3]),
-                             videoColor,
-                             fadeFactor);
+    float4 finalColor = lerp(
+        float4(fadeColor[0], fadeColor[1], fadeColor[2], fadeColor[3]),
+        videoColor,
+        fadeFactor
+    );
 
     return finalColor;
 }
